@@ -56,6 +56,7 @@ class resnetv1(Network):
     with tf.variable_scope(name) as scope:
       batch_ids = tf.squeeze(tf.slice(rois, [0, 0], [-1, 1], name="batch_id"), [1])
       # Get the normalized coordinates of bboxes
+      # divide stride in float
       bottom_shape = tf.shape(bottom)
       height = (tf.to_float(bottom_shape[1]) - 1.) * np.float32(self._feat_stride[0])
       width = (tf.to_float(bottom_shape[2]) - 1.) * np.float32(self._feat_stride[0])
@@ -65,13 +66,14 @@ class resnetv1(Network):
       y2 = tf.slice(rois, [0, 4], [-1, 1], name="y2") / height
       # Won't be back-propagated to rois anyway, but to save time
       bboxes = tf.stop_gradient(tf.concat([y1, x1, y2, x2], 1))
-      if cfg.RESNET.MAX_POOL:
-        pre_pool_size = cfg.POOLING_SIZE * 2
-        crops = tf.image.crop_and_resize(bottom, bboxes, tf.to_int32(batch_ids), [pre_pool_size, pre_pool_size],
-                                         name="crops")
-        crops = slim.max_pool2d(crops, [2, 2], padding='SAME')
-      else:
-        crops = tf.image.crop_and_resize(bottom, bboxes, tf.to_int32(batch_ids), [cfg.POOLING_SIZE, cfg.POOLING_SIZE],
+      #if cfg.RESNET.MAX_POOL:
+        #pre_pool_size = cfg.POOLING_SIZE * 2
+        #crops = tf.image.crop_and_resize(bottom, bboxes, tf.to_int32(batch_ids), [pre_pool_size, pre_pool_size],
+                                        # name="crops")
+        #crops = slim.max_pool2d(crops, [2, 2], padding='SAME')
+      #else:
+      #only crop and resize needed, adjust pooling size in cfg
+      crops = tf.image.crop_and_resize(bottom, bboxes, tf.to_int32(batch_ids), [cfg.POOLING_SIZE, cfg.POOLING_SIZE],
                                          name="crops")
     return crops
 
